@@ -1,6 +1,6 @@
 $KCODE="u"
 require "jcode"
-
+#版本 ruby 1.8.6 (2007-09-24 patchlevel 111) [i386-mswin32]
 ###############################################################
 #代码1
 class Robot
@@ -360,12 +360,19 @@ class Fixnum
 	def +(value)
 		return self.plus(value*2)
 	end
+
 end
 
 puts 1.plus(1) 	#结果为2
 puts 1+1 		#结果为3
 
-
+#防止影响后面的代码
+class Fixnum
+	#恢复+方法
+	def +(value)
+		self.plus(value)
+	end
+end
 
 ###############################################################
 #代码14
@@ -523,15 +530,313 @@ puts my_method="downcase"
 puts "ABCD".send(my_method)
 
 
+###############################################################
+#代码19
+
+
+puts String.methods,"//methods end" 					#获取所有方法
+puts String.instance_methods,"//instance methods end" 	#获取所有公开的实例方法
+puts String.method_defined?(:reverse)  	#检测类是否定义了某实例方法
+puts "str".respond_to?(:upcase)  		#检测类是否可以响应某实例方法的调用
+
+
+str="PI"
+puts Math.const_get(str) 	#const_get可以根据常量名称获取模块或者类中的常量值 =>3.14159265358979
+
+
+class_name="Array"
+array_class=Object.const_get(class_name) 	#所有的类都是继承自Object,每个类在Object中都有个class常量
+puts array_class.new
+
+
+@aa=1
+puts self.instance_variable_get("@aa")
+self.instance_variable_set("@aa",2)
+puts @aa
 
 
 
 
+###############################################################
+#代码20
+
+class MyClass
+
+	def self.new_method(name,&block)
+		define_method(name,&block) 		#动态定义方法
+	end
+end
+
+MyClass.new_method(:my_new_method){ puts "这是动态定义的新方法"}
+my_class=MyClass.new
+my_class.my_new_method
+
+
+
+class Module
+
+	def const_missing(name)
+		puts "常数{name} 没有定义"
+	end
+
+	def method_missing(name,*args)
+		puts "方法#{name}没有定义！"
+	end
+end
+
+puts String.unknown_method 	#输出方法unknown_method没有定义！
+puts String::Unknown_Const 	#常数{name} 没有定义
+
+
+class Module
+
+	def const_missing(name)
+
+		#使用正则表达式对没有定义的常数名进行匹配
+		match=/^ASCII_FOR_([A-Z]|[a-z])$/.match(name.to_s)
+		
+		if match
+			#如果符合ASCII_FOR_*字母的表达形式则返回相应的ASCII码
+			return match[1][0]
+		else
+			#否则依然报错
+			raise NoMethodError
+		end
+	end
+end
+
+
+puts ASCII_FOR_A  		#输出A的ASCII码65
+puts ASCII_FOR_z		#输出Z的ASCII码122
+#puts ASCII_FOR_ab		#NoMethodError (NoMethodError)
+
+
+
+###############################################################
+#代码21
+
+class Student
+	attr_accessor:name,:sex,:age,:grade
+
+	def initialize(_name,_sex,_age,_grade)
+		self.name=_name
+		self.sex=_sex
+		self.age=_age
+		self.grade=_grade
+	end
+
+	#定义to_s方法后，使用puts会直接输出学生的姓名
+	def to_s
+		self.name
+	end
+end
+
+class School<Array
+	#查找学生
+	def find_student(by,value)
+		#使用Array类的find_all方法，并使用send方法动态获得属性
+		#puts self
+		self.find_all{|st| st.send(by)==value}
+	end
+
+	def add_student(student)
+		self<<student
+	end
+
+	def method_missing(name,argument)
+		#使用正则表达式对没有定义的方法名进行匹配
+		match=/^find_student_by_([a-z]+)$/.match(name.to_s)
+		if match
+			#如果符合find_by_name等形式则调用find_student进行查找
+			find_student match[1],argument
+		else
+			raise NoMethodError
+		end
+	end
+end
+
+school=School.new
+school.add_student(Student.new("张三","非女",16,"初1"))
+school.add_student(Student.new("李四","女",12,"初2"))
+school.add_student(Student.new("王五","男",11,"初3"))
+school.add_student(Student.new("赵四","非男",19,"初1"))
+
+
+puts "名字叫张三的学生有:"
+puts school.find_student_by_name("张三")
+puts "性别是男的学生有:"
+puts school.find_student_by_sex("男")
+puts "年龄是16的学生有"
+puts school.find_student_by_age("16")
+
+
+
+###############################################################
+#代码22
+
+def test_function
+	puts "test_function"
+end
+
+
+undef test_function		#删除方法定义
+
+
+class MyClass
+
+	def method1
+		puts "super_method1"
+	end
+
+	def method2
+		puts "method2"
+	end
+
+	def method3
+		puts "sup_method3"
+	end
+end
+
+
+class MySubClass < MyClass
+
+	def method1
+		puts "method1"
+	end
+
+	def method2
+		puts "method2"
+	end
+
+	remove_method:method1  	#删除当前类的方法
+	#remove_method:method3 	#不能删除父类的方法
+	undef_method:method2 	#能将当前类，父类的此方法都删除
+end
+
+
+sub_class=MySubClass.new
+sub_class.method1 		#输出method1
+#sub_class.method2 		#出错
+
+
+
+###############################################################
+#代码23
+
+def run_twice
+
+	puts "开始运行"
+	yield 1
+	yield 1
+	yield 0
+	puts "运行结束"
+end
+
+
+#调用方法绑定{}代码块
+run_twice {|i| if i then puts "#{i} Say Hello!" else puts "not i" end}
+
+
+#|i| 在代码块中|x,y,z|是参数
+
+j=0
+#调用方法绑定do..end代码块
+run_twice do |j|
+	puts j
+	j=j+1
+	puts j
+end
+
+puts 1+1
+
+
+
+###############################################################
+#代码24
+
+class Array
+
+	def for_each
+		#遍历数组
+		for i in (0..self.length-1)
+			#将数组中元素逐个传入代码块进行迭代
+			yield self[i]
+		end
+	end
+end
+
+
+#数组迭代
+(["a","b","c"]).for_each{|i| puts i}
+
+#数组迭代
+sum=0
+[1,2,3,4,10].for_each do |i|
+	sum=sum+i
+end
+puts sum
 
 
 
 
+###############################################################
+#代码25
 
+my_block=Proc.new{|x| puts "block method #{x}"}
+
+def run_twice(arg,&block)
+
+	puts "开始运行"
+	block.call arg
+	puts "运行结束"
+end
+run_twice("hello",&my_block)
+
+
+#直接传匿名代码块也行
+run_twice("hello") {|word| puts "nick method #{word}"}
+
+
+
+#Proc 与 lambda 代码块方式
+
+def proc_test
+	f=Proc.new{return "从Proc代码块中直接跳出"}
+	f.call
+	return "proc_test正常退出"
+end
+
+
+def lambda_test
+	f=lambda{return "从lambda中直接跳出"}
+	f.call
+	return "lambda_test正常退出"
+end
+
+
+puts proc_test 			#输出从Proc代码块中直接跳出
+puts lambda_test 		#输出lambda_test正常退出
+
+##Proc的代码块return后直接跳出，lambda的代码块return后，会继续执行下面的代码
+
+###############################################################
+#代码26
+
+
+begin
+	y=10
+	z=0
+	x=y/z
+	puts x
+rescue ZeroDivisionError
+	puts "除数为0！"
+	raise ZeroDivisionError,"除数为000!"
+rescue => err
+	puts err
+ensure
+	#try end
+	puts "end ....."
+end
 
 
 
