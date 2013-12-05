@@ -277,6 +277,7 @@ class Fixnum
 		puts "我的值是#{self}"
 	end
 
+	alias abs2 abs
 	#覆盖旧的abs方法
 	def abs
 		puts "abs不能用"
@@ -830,14 +831,44 @@ begin
 	puts x
 rescue ZeroDivisionError
 	puts "除数为0！"
-	raise ZeroDivisionError,"除数为000!"
+	#raise ZeroDivisionError,"除数为000!" 	#
 rescue => err
 	puts err
 ensure
 	#try end
 	puts "end ....."
+
+	puts "sss"
 end
 
+###############################################################
+#代码27
+
+a=123_456_789
+puts a 
+
+num_2=0b100 			#2进制数
+num_8=0123				#8进制数
+num_16=0x11				#16进制数
+
+puts "num_2:#{num_2},num_8:#{num_8},num_16:#{num_16},?a:#{?a} ?\n:#{?\n}"  #?a ,可以取字符的ASCII码
+
+
+num1=10
+num2=2.5
+puts "num1<=>:#{num1<=>num2}"
+
+
+
+puts "#{-1.abs2}" 	#返回数字的绝对值
+puts "#{3.chr}" 	#数字对应的ASCII码
+
+3.times{|i| print i} 	#times迭代方法
+puts ''
+5.downto(2){|i| print i} 	#从大到小进行迭代 从5到2
+puts ''
+15.upto(20){|i| print i} 	#从小到大进行迭代 从15到20
+puts 3.to_s.class
 
 
 

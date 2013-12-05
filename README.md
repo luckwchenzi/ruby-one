@@ -6,6 +6,7 @@ the ruby code for github
 #git help
 git add README
 git commit -m "first commit"
+git push -u orgin master
 
 #update code
 git pull
